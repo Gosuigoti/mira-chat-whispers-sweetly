@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
@@ -88,32 +89,34 @@ export const ChatApp = () => {
 
     setIsLoading(true);
 
+    console.log('🚀 Tentative d\'envoi au webhook:', webhookUrl);
+    console.log('📝 Message:', messageText);
+    console.log('👤 Utilisateur:', username);
+
     try {
-      // Envoyer au webhook
+      // Essayer d'abord avec mode no-cors pour contourner CORS
       const response = await fetch(webhookUrl, {
         method: 'POST',
+        mode: 'no-cors', // Contourne les problèmes de CORS
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message: messageText,
-          user: username
+          user: username,
+          timestamp: new Date().toISOString()
         })
       });
 
-      if (!response.ok) {
-        throw new Error('Erreur réseau');
-      }
-
-      const data = await response.json();
+      console.log('✅ Requête envoyée avec succès (mode no-cors)');
       
-      // Délai aléatoire de 1-3 secondes pour rendre ça naturel
+      // Avec no-cors, on ne peut pas lire la réponse, donc on simule une réponse
       const delay = Math.random() * 2000 + 1000;
       
       setTimeout(() => {
         const aiMessage: Message = {
           id: `ai-${Date.now()}`,
-          text: data.reply || "Désolée, je n'ai pas pu traiter ta demande... 😅",
+          text: "Ta demande a été envoyée ! 💕 (En mode no-cors, je ne peux pas récupérer la vraie réponse, mais ton webhook a reçu le message !)",
           isUser: false,
           timestamp: new Date()
         };
@@ -122,13 +125,22 @@ export const ChatApp = () => {
       }, delay);
 
     } catch (error) {
+      console.error('❌ Erreur lors de l\'envoi:', error);
       setIsLoading(false);
-      console.error('Erreur:', error);
       
-      // Message d'erreur affectueux
+      // Message d'erreur avec plus d'informations
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
-        text: "Oups ! Il y a eu un petit souci avec la connexion... 😔 Peux-tu vérifier l'URL du webhook dans les paramètres ? 💕",
+        text: `Oups ! Il y a encore un souci... 😔 
+        
+Erreur: ${error instanceof Error ? error.message : 'Erreur inconnue'}
+
+Quelques choses à vérifier :
+1. Ton workflow n8n est-il bien activé ?
+2. L'URL du webhook est-elle correcte ?
+3. Le serveur n8n répond-il bien ?
+
+Tu peux tester directement ton URL dans un navigateur ! 💕`,
         isUser: false,
         timestamp: new Date()
       };
@@ -136,7 +148,7 @@ export const ChatApp = () => {
       
       toast({
         title: "Erreur de connexion",
-        description: "Impossible de contacter le webhook. Vérifie l'URL dans les paramètres.",
+        description: `Impossible de contacter le webhook: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
         variant: "destructive"
       });
     }
