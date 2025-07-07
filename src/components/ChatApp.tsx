@@ -10,7 +10,7 @@ import { Settings, MessageCircle, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // Configuration du webhook - à modifier selon tes besoins
-const DEFAULT_WEBHOOK_URL = 'https://ton-webhook.example.com/chat';
+const DEFAULT_WEBHOOK_URL = 'https://n8n.eclipse-pixel-war.xyz/webhook/mira-chat';
 
 interface Message {
   id: string;
