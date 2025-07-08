@@ -94,10 +94,6 @@ export const ChatApp = () => {
     console.log('👤 Utilisateur:', username);
 
     try {
-      console.log('🚀 Tentative d\'envoi au webhook:', webhookUrl);
-      console.log('📝 Message:', messageText);
-      console.log('👤 Utilisateur:', username);
-
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
@@ -106,42 +102,37 @@ export const ChatApp = () => {
         body: JSON.stringify({
           message: messageText,
           user: username,
-          sessionId: username, // Utiliser le username comme sessionId
+          sessionId: username,
           timestamp: new Date().toISOString()
         })
       });
 
       console.log('📡 Statut de la réponse:', response.status);
-      console.log('📡 Headers:', response.headers);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      // Vérifier si la réponse a du contenu
-      const contentType = response.headers.get('content-type');
-      console.log('📡 Content-Type:', contentType);
+      // Protection complète contre les réponses vides
+      let data = { reply: "Message reçu ! 💕" }; // Valeur par défaut
       
-      let data;
-      if (contentType && contentType.includes('application/json')) {
+      try {
         const responseText = await response.text();
         console.log('📡 Réponse brute:', responseText);
         
-        if (responseText.trim()) {
-          data = JSON.parse(responseText);
-          console.log('📡 Données parsées:', data);
-        } else {
-          console.log('⚠️ Réponse vide reçue');
-          data = { reply: "Message reçu ! 💕" };
+        if (responseText && responseText.trim()) {
+          const parsedData = JSON.parse(responseText);
+          if (parsedData && parsedData.reply) {
+            data = parsedData;
+          }
         }
-      } else {
-        console.log('⚠️ Réponse non-JSON reçue');
-        data = { reply: "Message envoyé ! 💕" };
+      } catch (parseError) {
+        console.log('⚠️ Erreur de parsing JSON, utilisation de la réponse par défaut:', parseError);
       }
       
       const aiMessage: Message = {
         id: `ai-${Date.now()}`,
-        text: data.reply || "Message reçu ! 💕",
+        text: data.reply,
         isUser: false,
         timestamp: new Date()
       };
