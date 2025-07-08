@@ -94,8 +94,11 @@ export const ChatApp = () => {
     console.log('👤 Utilisateur:', username);
 
     try {
-      // Tentative normale d'abord
-      await fetch(webhookUrl, {
+      console.log('🚀 Tentative d\'envoi au webhook:', webhookUrl);
+      console.log('📝 Message:', messageText);
+      console.log('👤 Utilisateur:', username);
+
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -103,25 +106,47 @@ export const ChatApp = () => {
         body: JSON.stringify({
           message: messageText,
           user: username,
+          sessionId: username, // Utiliser le username comme sessionId
           timestamp: new Date().toISOString()
         })
       });
 
-      console.log('✅ Requête envoyée avec succès');
+      console.log('📡 Statut de la réponse:', response.status);
+      console.log('📡 Headers:', response.headers);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      // Vérifier si la réponse a du contenu
+      const contentType = response.headers.get('content-type');
+      console.log('📡 Content-Type:', contentType);
       
-      // Délai aléatoire pour une réponse naturelle
-      const delay = Math.random() * 2000 + 1000;
+      let data;
+      if (contentType && contentType.includes('application/json')) {
+        const responseText = await response.text();
+        console.log('📡 Réponse brute:', responseText);
+        
+        if (responseText.trim()) {
+          data = JSON.parse(responseText);
+          console.log('📡 Données parsées:', data);
+        } else {
+          console.log('⚠️ Réponse vide reçue');
+          data = { reply: "Message reçu ! 💕" };
+        }
+      } else {
+        console.log('⚠️ Réponse non-JSON reçue');
+        data = { reply: "Message envoyé ! 💕" };
+      }
       
-      setTimeout(() => {
-        const aiMessage: Message = {
-          id: `ai-${Date.now()}`,
-          text: "Message envoyé à Mira ! 💕 Elle va te répondre bientôt !",
-          isUser: false,
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, aiMessage]);
-        setIsLoading(false);
-      }, delay);
+      const aiMessage: Message = {
+        id: `ai-${Date.now()}`,
+        text: data.reply || "Message reçu ! 💕",
+        isUser: false,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, aiMessage]);
+      setIsLoading(false);
 
     } catch (error) {
       console.error('❌ Erreur lors de l\'envoi:', error);
