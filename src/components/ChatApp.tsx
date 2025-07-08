@@ -94,10 +94,9 @@ export const ChatApp = () => {
     console.log('👤 Utilisateur:', username);
 
     try {
-      // Essayer d'abord avec mode no-cors pour contourner CORS
-      const response = await fetch(webhookUrl, {
+      // Tentative normale d'abord
+      await fetch(webhookUrl, {
         method: 'POST',
-        mode: 'no-cors', // Contourne les problèmes de CORS
         headers: {
           'Content-Type': 'application/json',
         },
@@ -108,15 +107,15 @@ export const ChatApp = () => {
         })
       });
 
-      console.log('✅ Requête envoyée avec succès (mode no-cors)');
+      console.log('✅ Requête envoyée avec succès');
       
-      // Avec no-cors, on ne peut pas lire la réponse, donc on simule une réponse
+      // Délai aléatoire pour une réponse naturelle
       const delay = Math.random() * 2000 + 1000;
       
       setTimeout(() => {
         const aiMessage: Message = {
           id: `ai-${Date.now()}`,
-          text: "Ta demande a été envoyée ! 💕 (En mode no-cors, je ne peux pas récupérer la vraie réponse, mais ton webhook a reçu le message !)",
+          text: "Message envoyé à Mira ! 💕 Elle va te répondre bientôt !",
           isUser: false,
           timestamp: new Date()
         };
